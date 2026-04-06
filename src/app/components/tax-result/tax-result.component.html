@@ -1,0 +1,195 @@
+<div class="result-container">
+
+  <!-- Summary Banner -->
+  <div class="summary-banner">
+    <div class="summary-item">
+      <span class="label">Total Income <span class="bn">মোট আয়</span></span>
+      <span class="value">৳{{ fmt(result().totalIncome) }}</span>
+    </div>
+    <div class="summary-item">
+      <span class="label">Final Tax Payable <span class="bn">প্রদেয় কর</span></span>
+      <span class="value">৳{{ fmt(result().finalTax) }}</span>
+    </div>
+    <div class="summary-item">
+      <span class="label">Effective Rate <span class="bn">কার্যকর হার</span></span>
+      <span class="value">
+        @if (result().totalIncome > 0) {
+          {{ (result().finalTax / result().totalIncome * 100).toFixed(2) }}%
+        } @else {
+          0%
+        }
+      </span>
+    </div>
+    <div class="summary-item summary-item--right">
+      <span class="label">Monthly Deduction <span class="bn">মাসিক কর কর্তন</span></span>
+      <span class="value">৳{{ fmt(result().finalTax / 12) }}</span>
+    </div>
+  </div>
+
+  <!-- Income Breakdown -->
+  <section class="result-section">
+    <h3 class="section-title">Income Breakdown <span class="bn">আয়ের বিবরণ</span></h3>
+    <table class="breakdown-table">
+      <tbody>
+        @if (result().yearlyBonus > 0) {
+          <tr class="parent-row" (click)="salaryExpanded.set(!salaryExpanded())">
+            <td>
+              <span class="chevron" [class.expanded]="salaryExpanded()">›</span>
+              Salary Income <span class="bn">বেতন আয়</span>
+            </td>
+            <td class="amount">৳{{ fmt(result().salaryIncome) }}</td>
+          </tr>
+          @if (salaryExpanded()) {
+            <tr class="sub-row">
+              <td class="sub-label">Monthly Salary <span class="bn">মাসিক বেতন</span></td>
+              <td class="amount sub-amount">৳{{ fmt(result().monthlySalaryIncome) }}</td>
+            </tr>
+            <tr class="sub-row">
+              <td class="sub-label">Yearly Bonus <span class="bn">বার্ষিক বোনাস</span></td>
+              <td class="amount sub-amount">৳{{ fmt(result().yearlyBonus) }}</td>
+            </tr>
+          }
+        } @else {
+          <tr>
+            <td>Salary Income <span class="bn">বেতন আয়</span></td>
+            <td class="amount">৳{{ fmt(result().salaryIncome) }}</td>
+          </tr>
+        }
+        <tr>
+          <td>Tax-Free Threshold <span class="bn">করমুক্ত সীমা</span></td>
+          <td class="amount deduction">–৳{{ fmt(result().taxFreeThreshold) }}</td>
+        </tr>
+        <tr class="total-row">
+          <td>Taxable Income <span class="bn">করযোগ্য আয়</span></td>
+          <td class="amount">৳{{ fmt(result().taxableIncome) }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Slab Breakdown -->
+  <section class="result-section">
+    <h3 class="section-title">Tax Slab Breakdown <span class="bn">করের স্তরভিত্তিক বিভাজন</span></h3>
+    <div class="table-scroll">
+    <table class="breakdown-table slab-table">
+      <thead>
+        <tr>
+          <th>Range / বিবরণ</th>
+          <th>Rate / হার</th>
+          <th>Taxable / করযোগ্য</th>
+          <th>Tax / কর</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (slab of result().slabBreakdown; track slab.slabIndex) {
+          <tr [class.zero-tax]="slab.rate === 0">
+            <td>
+              <span class="en">{{ slab.rangeEn }}</span>
+              <span class="bn">{{ slab.rangeBn }}</span>
+            </td>
+            <td class="center">{{ pct(slab.rate) }}</td>
+            <td class="amount">৳{{ fmt(slab.taxableAmount) }}</td>
+            <td class="amount">৳{{ fmt(slab.tax) }}</td>
+          </tr>
+        }
+        <tr class="total-row">
+          <td colspan="3">Gross Tax <span class="bn">মোট কর</span></td>
+          <td class="amount">৳{{ fmt(result().grossTax) }}</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <!-- Rebate & Final -->
+  <section class="result-section">
+    <h3 class="section-title">Tax Computation <span class="bn">কর নির্ধারণ</span></h3>
+    <table class="breakdown-table">
+      <tbody>
+        <tr>
+          <td>Gross Tax <span class="bn">মোট কর</span></td>
+          <td class="amount">৳{{ fmt(result().grossTax) }}</td>
+        </tr>
+        @if (result().eligibleInvestment > 0) {
+          <tr>
+            <td>
+              Investment Rebate <span class="bn">বিনিয়োগ রেয়াত</span>
+              <small>(on ৳{{ fmt(result().eligibleInvestment) }})</small>
+            </td>
+            <td class="amount deduction">–৳{{ fmt(result().rebate) }}</td>
+          </tr>
+        }
+        <tr>
+          <td>Tax After Rebate <span class="bn">রেয়াতের পর কর</span></td>
+          <td class="amount">৳{{ fmt(result().taxAfterRebate) }}</td>
+        </tr>
+        @if (result().minimumTaxApplied) {
+          <tr class="warning-row">
+            <td>Minimum Tax Applied <span class="bn">সর্বনিম্ন কর প্রযোজ্য</span></td>
+            <td class="amount">৳{{ fmt(result().minimumTaxAmount) }}</td>
+          </tr>
+        }
+        @if (result().surcharge > 0) {
+          <tr>
+            <td>Surcharge <span class="bn">সারচার্জ</span></td>
+            <td class="amount">৳{{ fmt(result().surcharge) }}</td>
+          </tr>
+        }
+        <tr class="final-row">
+          <td>Final Tax Payable <span class="bn">প্রদেয় চূড়ান্ত কর</span></td>
+          <td class="amount">৳{{ fmt(result().finalTax) }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Bilingual Explanation -->
+  <section class="result-section explanation-section">
+    <div class="explanation-header">
+      <h3 class="section-title">Step-by-Step Explanation <span class="bn">ধাপে ধাপে ব্যাখ্যা</span></h3>
+      <div class="explanation-actions">
+        <button class="btn-download" (click)="downloadPDF()" title="Download PDF">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          PDF
+        </button>
+        <div class="explanation-tabs">
+          <button class="tab-btn" [class.active]="explanationTab() === 'en'" (click)="explanationTab.set('en')">English</button>
+          <button class="tab-btn" [class.active]="explanationTab() === 'bn'" (click)="explanationTab.set('bn')">বাংলা</button>
+        </div>
+      </div>
+    </div>
+
+    @if (explanationTab() === 'en') {
+      <ol class="explanation-list">
+        @for (step of result().explanationEn; track $index) {
+          <li>
+            {{ step.text }}
+            @if (step.subItems && step.subItems.length > 0) {
+              <ul class="sub-explanation">
+                @for (sub of step.subItems; track $index) {
+                  <li>{{ sub }}</li>
+                }
+              </ul>
+            }
+          </li>
+        }
+      </ol>
+    } @else {
+      <ol class="explanation-list bn-list">
+        @for (step of result().explanationBn; track $index) {
+          <li>
+            {{ step.text }}
+            @if (step.subItems && step.subItems.length > 0) {
+              <ul class="sub-explanation">
+                @for (sub of step.subItems; track $index) {
+                  <li>{{ sub }}</li>
+                }
+              </ul>
+            }
+          </li>
+        }
+      </ol>
+    }
+  </section>
+
+</div>

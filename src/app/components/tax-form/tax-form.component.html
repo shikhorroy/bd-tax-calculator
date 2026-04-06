@@ -1,0 +1,213 @@
+<form [formGroup]="form" class="tax-form">
+
+  <!-- Taxpayer Category -->
+  <section class="form-section">
+    <h3 class="section-title">Taxpayer Category <span class="bn">করদাতার শ্রেণী</span></h3>
+    <div class="radio-group">
+      @for (cat of [
+        { value: 'general', en: 'General', bn: 'সাধারণ' },
+        { value: 'female', en: 'Female / Senior (65+)', bn: 'মহিলা / প্রবীণ (৬৫+)' },
+        { value: 'disabled', en: 'Disabled', bn: 'প্রতিবন্ধী' },
+        { value: 'freedom_fighter', en: 'Freedom Fighter', bn: 'মুক্তিযোদ্ধা' }
+      ]; track cat.value) {
+        <label class="radio-label">
+          <input type="radio" formControlName="category" [value]="cat.value" />
+          <span class="en">{{ cat.en }}</span>
+          <span class="bn">{{ cat.bn }}</span>
+        </label>
+      }
+    </div>
+  </section>
+
+  <!-- Salary Income -->
+  <section class="form-section">
+    <div class="section-header">
+      <h3 class="section-title">Salary Income <span class="bn">বেতন আয়</span></h3>
+      @if (salaryPeriods.length < 3) {
+        <button type="button" class="btn-add" (click)="addSalaryPeriod()">+ Add Period</button>
+      }
+    </div>
+
+    @for (period of salaryPeriods.controls; track $index) {
+      <div class="salary-period" formArrayName="salaryPeriods">
+        <div class="period-header">
+          <span class="period-label">Period {{ $index + 1 }}</span>
+          @if (salaryPeriods.length > 1) {
+            <button type="button" class="btn-remove" (click)="removeSalaryPeriod($index)">Remove</button>
+          }
+        </div>
+
+        <div [formGroupName]="$index">
+          <!-- Per-period mode toggle -->
+          <div class="mode-toggle">
+            <button type="button"
+              class="mode-btn"
+              [class.active]="period.get('mode')?.value === 'gross'"
+              (click)="setPeriodMode($index, 'gross')">
+              Gross Salary <span class="bn">মোট বেতন</span>
+            </button>
+            <button type="button"
+              class="mode-btn"
+              [class.active]="period.get('mode')?.value === 'detailed'"
+              (click)="setPeriodMode($index, 'detailed')">
+              Detailed Entry
+            </button>
+          </div>
+
+          <!-- Months worked (always visible) -->
+          <div class="months-row">
+            <div class="field field-inline">
+              <label>Months Worked <span class="bn">কাজের মাস</span></label>
+              <input type="number" formControlName="monthsWorked" min="1" max="12" />
+            </div>
+          </div>
+
+          <!-- Detailed fields -->
+          @if (period.get('mode')?.value === 'detailed') {
+            <div class="period-fields">
+              <div class="field">
+                <label>Basic Salary <span class="bn">মূল বেতন</span></label>
+                <input type="number" formControlName="monthlyBasic" min="0" />
+              </div>
+              <div class="field">
+                <label>House Rent <span class="bn">বাড়ি ভাড়া</span></label>
+                <input type="number" formControlName="monthlyHouseRent" min="0" />
+              </div>
+              <div class="field">
+                <label>Medical <span class="bn">চিকিৎসা</span></label>
+                <input type="number" formControlName="monthlyMedical" min="0" />
+              </div>
+              <div class="field">
+                <label>Conveyance <span class="bn">যাতায়াত</span></label>
+                <input type="number" formControlName="monthlyConveyance" min="0" />
+              </div>
+              <div class="field">
+                <label>Other <span class="bn">অন্যান্য</span></label>
+                <input type="number" formControlName="monthlyOther" min="0" />
+              </div>
+            </div>
+          }
+
+          <!-- Gross mode -->
+          @if (period.get('mode')?.value === 'gross') {
+            <div class="gross-mode">
+              <p class="mode-helper">আপনি চাইলে মোট বেতন লিখতে পারেন, সিস্টেম স্বয়ংক্রিয়ভাবে ভাগ করবে</p>
+              <div class="field">
+                <label>Gross Monthly Salary <span class="bn">মাসিক মোট বেতন</span></label>
+                <input type="number" formControlName="grossMonthly" min="0" />
+              </div>
+
+              @if (periodBreakdowns()[$index]; as bd) {
+                <div class="breakdown-preview">
+                  <div class="breakdown-header">
+                    <h4 class="breakdown-title">Auto Breakdown <span class="bn">স্বয়ংক্রিয় বিভাজন</span></h4>
+                    <p class="breakdown-note">Gross salary থেকে পূর্বনির্ধারিত শতাংশ অনুযায়ী বেতন বিভাজন করা হয়েছে</p>
+                  </div>
+
+                  <div class="bd-items">
+                    @for (item of bd.items; track item.nameEn) {
+                      <div class="bd-item" [class.bd-item--adjusted]="item.adjustmentApplied">
+                        <div class="bd-item-name">
+                          {{ item.nameEn }}
+                          <span class="bn">{{ item.nameBn }}</span>
+                        </div>
+                        <div class="bd-item-calc">
+                          <span class="bd-percent-badge">{{ item.percent * 100 | number:'1.0-0' }}%</span>
+                          <span class="bd-arrow">→</span>
+                          <span class="bd-calc-amount">৳{{ fmt(item.calculatedAmount) }}</span>
+                        </div>
+                        @if (item.adjustmentApplied) {
+                          <div class="bd-item-adjusted">
+                            <span class="adjusted-label">Limit অনুযায়ী সমন্বয় করা হয়েছে</span>
+                            <span class="adjusted-amount">৳{{ fmt(item.allowedAmount) }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <div class="bd-totals">
+                    <div class="bd-total-row">
+                      <span>Monthly Total <span class="bn">মাসিক মোট</span></span>
+                      <span class="bd-total-val">৳{{ fmt(bd.totalCalculated) }}</span>
+                    </div>
+                    <div class="bd-total-row bd-total-exempt">
+                      <span>Total Exempt <span class="bn">মোট করমুক্ত</span></span>
+                      <span class="exempt-val">৳{{ fmt(bd.totalExempt) }}</span>
+                    </div>
+                    <div class="bd-total-row bd-total-taxable">
+                      <span>Total Taxable <span class="bn">মোট করযোগ্য</span></span>
+                      <span class="taxable-val">৳{{ fmt(bd.totalTaxable) }}</span>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Yearly Bonus -->
+    <div class="yearly-bonus-row">
+      <div class="field">
+        <label>Yearly Bonus <span class="bn">বার্ষিক বোনাস</span></label>
+        <input type="number" formControlName="yearlyBonus" min="0" />
+        <p class="field-helper">বার্ষিক বোনাস থাকলে এখানে লিখুন (যেমন: ঈদ বোনাস, উৎসব ভাতা)</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Other Income -->
+  <section class="form-section">
+    <h3 class="section-title">Other Income Sources <span class="bn">অন্যান্য আয়ের উৎস</span></h3>
+    <div class="fields-grid">
+      <div class="field">
+        <label>Rental Income <span class="bn">ভাড়া আয়</span></label>
+        <input type="number" formControlName="rentalIncome" min="0" />
+      </div>
+      <div class="field">
+        <label>Business Income <span class="bn">ব্যবসায়িক আয়</span></label>
+        <input type="number" formControlName="businessIncome" min="0" />
+      </div>
+      <div class="field">
+        <label>Capital Gain <span class="bn">মূলধনি মুনাফা</span></label>
+        <input type="number" formControlName="capitalGain" min="0" />
+      </div>
+      <div class="field">
+        <label>Financial Income <span class="bn">আর্থিক আয়</span></label>
+        <input type="number" formControlName="financialIncome" min="0" />
+      </div>
+      <div class="field">
+        <label>Other Income <span class="bn">অন্যান্য আয়</span></label>
+        <input type="number" formControlName="otherIncome" min="0" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Investment & Assets -->
+  <section class="form-section">
+    <h3 class="section-title">Investment & Assets <span class="bn">বিনিয়োগ ও সম্পদ</span></h3>
+    <div class="fields-grid">
+      <div class="field">
+        <label>Investment Amount <span class="bn">বিনিয়োগের পরিমাণ</span></label>
+        <input type="number" formControlName="investmentAmount" min="0" />
+      </div>
+      <div class="field">
+        <label>Net Assets (for surcharge) <span class="bn">নিট সম্পদ (সারচার্জের জন্য)</span></label>
+        <input type="number" formControlName="netAssets" min="0" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Validation Errors -->
+  @if (validationErrors().length > 0) {
+    <div class="validation-errors">
+      @for (err of validationErrors(); track err) {
+        <p class="error-msg">* {{ err }}</p>
+      }
+    </div>
+  }
+
+
+</form>

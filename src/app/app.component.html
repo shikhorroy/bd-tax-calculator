@@ -1,0 +1,30 @@
+<div class="app-wrapper">
+  <header class="app-header">
+    <div class="header-inner">
+      <a class="logo" href="/" aria-label="Reload">
+        <span class="logo-icon">🇧🇩</span>
+        <div>
+          <h1>Bangladesh Tax Calculator</h1>
+          <p>বাংলাদেশ আয়কর ক্যালকুলেটর</p>
+        </div>
+      </a>
+      <span class="tax-year-badge">2025–2026</span>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="content-grid has-result">
+      <div class="form-column">
+        <app-year-selector />
+        <app-tax-form (calculate)="onCalculate($event)" />
+      </div>
+      <div class="result-column">
+        <app-tax-result [result]="result()" />
+      </div>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <p>Based on Bangladesh Income Tax Rules 2025–2026 &nbsp;|&nbsp; বাংলাদেশ আয়কর বিধিমালা ২০২৫–২০২৬</p>
+  </footer>
+</div>

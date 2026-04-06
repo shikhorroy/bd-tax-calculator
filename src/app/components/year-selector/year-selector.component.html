@@ -1,0 +1,35 @@
+<section class="year-settings-card">
+  <h2 class="section-title">
+    Tax Year Settings
+    <span class="bn">করবর্ষ সেটিংস</span>
+  </h2>
+
+  <div class="year-grid">
+    <!-- Fiscal Year -->
+    <div class="year-field">
+      <label>
+        Fiscal Year <span class="bn">আয় বছর</span>
+      </label>
+      <select [ngModel]="selectedYearLabel" (ngModelChange)="onYearChange($event)" class="year-select">
+        @for (year of taxYearService.availableYears(); track trackYear($index, year)) {
+          <option [value]="year.labelEn">{{ year.labelEn }} (Jul–Jun)</option>
+        }
+      </select>
+    </div>
+
+    <!-- Assessment Year -->
+    <div class="year-field">
+      <label>
+        Assessment Year <span class="bn">করবর্ষ</span>
+      </label>
+      <div class="year-display">
+        {{ taxYearService.selectedYear().assessmentYearStart }}–{{ taxYearService.selectedYear().assessmentYearEnd }}
+      </div>
+    </div>
+  </div>
+
+  <p class="helper-text">
+    <span class="en">Tax is being calculated based on income for this period.</span>
+    <span class="bn">কর গণনা এই সময়ের আয়ের উপর ভিত্তি করে করা হচ্ছে।</span>
+  </p>
+</section>
