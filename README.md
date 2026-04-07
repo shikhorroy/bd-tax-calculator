@@ -8,21 +8,22 @@ A configurable, bilingual (English + বাংলা) income tax calculator for 
 
 1. [Live Features](#live-features)
 2. [Tech Stack](#tech-stack)
-3. [Project Structure](#project-structure)
-4. [Getting Started](#getting-started)
-5. [Application Layout](#application-layout)
-6. [Components In Detail](#components-in-detail)
+3. [Deployment (GitHub Pages)](#deployment-github-pages)
+4. [Project Structure](#project-structure)
+5. [Getting Started](#getting-started)
+6. [Application Layout](#application-layout)
+7. [Components In Detail](#components-in-detail)
    - [App Shell](#1-app-shell-appcomponent)
    - [Year Selector](#2-year-selector-yearselectorcomponent)
    - [Tax Form](#3-tax-form-taxformcomponent)
    - [Tax Result](#4-tax-result-taxresultcomponent)
-7. [Services](#services)
+8. [Services](#services)
    - [TaxYearService](#taxyearservice)
    - [TaxConfigService](#taxconfigservice)
    - [TaxCalculationService](#taxcalculationservice)
    - [TaxExportService](#taxexportservice)
-8. [Data Models](#data-models)
-9. [Tax Calculation Rules](#tax-calculation-rules)
+9. [Data Models](#data-models)
+10. [Tax Calculation Rules](#tax-calculation-rules)
    - [Taxpayer Categories & Thresholds](#taxpayer-categories--thresholds)
    - [Salary Component Exemptions](#salary-component-exemptions)
    - [Progressive Tax Slabs](#progressive-tax-slabs)
@@ -111,6 +112,77 @@ ng test --include="**/tax-calculation.service.spec.ts"
 # Lint
 ng lint
 ```
+
+---
+
+## Deployment (GitHub Pages)
+
+The app is configured to deploy automatically to **GitHub Pages** via GitHub Actions on every push to the `main` branch.
+
+### How It Works
+
+```
+git push origin main
+       │
+       ▼
+GitHub Actions (.github/workflows/deploy.yml)
+       │
+       ├── npm ci                              ← install dependencies
+       ├── ng build --base-href /bd-tax-calculator/   ← production build
+       └── push dist/ → gh-pages branch       ← deploy
+               │
+               ▼
+       https://shikhorroy.github.io/bd-tax-calculator/
+```
+
+### One-Time Setup (do this once after first push)
+
+1. Push the code to GitHub:
+   ```bash
+   git push origin main
+   ```
+
+2. Go to the repository on GitHub:
+   `https://github.com/shikhorroy/bd-tax-calculator`
+
+3. Navigate to **Settings → Pages** (left sidebar).
+
+4. Under **Source**, select **Deploy from a branch**.
+
+5. Set **Branch** to `gh-pages` and folder to `/ (root)` → click **Save**.
+
+6. Wait 1–2 minutes. The live URL will appear at the top of the Pages settings page.
+
+### Live URL
+
+```
+https://shikhorroy.github.io/bd-tax-calculator/
+```
+
+### Subsequent Deploys
+
+No manual steps needed. Every `git push origin main` triggers the workflow automatically:
+
+```bash
+# Make changes, then:
+git add .
+git commit -m "your message"
+git push origin main
+# → GitHub Actions builds and deploys within ~2 minutes
+```
+
+### Workflow File
+
+The deployment config lives at `.github/workflows/deploy.yml`. Key settings:
+
+| Setting | Value |
+|---|---|
+| Trigger | Push to `main` branch |
+| Node version | 22 |
+| Build command | `ng build --base-href /bd-tax-calculator/` |
+| Deploy source | `dist/tax-calculator-app/browser` |
+| Deploy target | `gh-pages` branch |
+| Auth | `GITHUB_TOKEN` (automatic, no setup needed) |
 
 ---
 
